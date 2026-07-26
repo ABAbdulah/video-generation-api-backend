@@ -49,9 +49,16 @@ tests/                     153 tests, hit the real Neon DB, sequential
 3. **Rate limit sits OUTSIDE moderation** (oracle prevention — see handler.ts).
 4. **Debits land inside the scene-persisting transaction** — never charge for
    a generation that didn't persist. Invalid output is refused and not billed.
-5. Paid tiers (starter/best/pro) **throw until M7**; the route maps that to a
-   501 that names no provider. Model ids in `models.ts` are UNVERIFIED — check
-   openrouter.ai/models + ai.google.dev before wiring them.
+5. Paid tiers (M7, built 2026-07-26): `generate()` does RAG few-shot from the
+   corpus → provider call → validate → ONE repair pass with the validator's
+   errors fed back (M8); still-invalid output is refused and never billed.
+   Starter (gemini-2.5-flash) prefers GEMINI_API_KEY and transparently falls
+   back to OpenRouter ("google/<id>") when only OPENROUTER_API_KEY is set.
+   Best = anthropic/claude-sonnet-5, Pro = anthropic/claude-opus-5 — ids
+   verified against the live OpenRouter catalog 2026-07-26. A tier with no
+   usable key throws NotConfiguredError → the same clean, unbilled 501.
+   The vitest suite STRIPS provider keys (vitest.setup.ts) so it never spends
+   money; live checks are manual via `pnpm smoke:llm [pro]` (costs cents).
 
 ## Run & verify
 
@@ -71,9 +78,36 @@ upgrades embeddings), `OPENROUTER_API_KEY` (M7).
 Deploy: Railway, `railway.json` present — start `pnpm start`, healthcheck
 `/api/health`. No GitHub remote yet — Abdullah must create and push one.
 
+## M11 — exports (built 2026-07-26, live-verified)
+
+Paid plans (beginner/pro) export MP4/WebM/GIF; free tier gets a clean 403
+tier_locked the UI renders as an upgrade prompt. Architecture:
+- The `exports` table IS the queue. `src/render/worker.ts` runs IN-PROCESS
+  with the API (no separate service): claims rows with FOR UPDATE SKIP
+  LOCKED (replica-safe — proven live with two concurrent workers), renders
+  via @remotion/renderer + headless Chrome, stores bytes in `file_data`
+  (bytea; blob storage swap point = fileData → outputUrl).
+- `src/render/composition/DynamicScene.tsx` is BROWSER-CONTEXT code (webpack
+  bundle, executes only inside Remotion's Chrome) — the one sanctioned
+  `new Function` in this repo; `tests/no-eval.test.ts` pins it there and
+  forbids the API from importing the composition.
+- Routes: POST /api/exports (gated), GET /:id, GET /:id/download (bytes,
+  bearer-auth — frontend downloads via blob), GET /scene/:id/list.
+- Manual e2e: `pnpm smoke:render [all]`. First run downloads Chrome
+  Headless Shell (~113MB) into the container.
+- ⚠️ Railway risk: Chrome needs system shared libs the Nixpacks image may
+  lack. If deploy renders fail on missing libs, set DISABLE_RENDER_WORKER=1
+  to keep the API healthy and move the worker to a Dockerfile service.
+
+Also built same day: `GET /api/templates` (public corpus for the gallery)
+and `GET /api/scenes/recent` (workspace-scoped history) — see routes/library.ts.
+
 ## Next milestone
 
-**M7 — wire the paid tiers** in `lib/ai/generate.ts` (gemini-direct +
-openrouter branches), RAG few-shot from `retrieveTemplates()`, then the M8
-validation retry loop. Re-check sanitize/whitelist against real untrusted
-output when that lands.
+Remaining roadmap: **M9** (AI-authored params persistence), **M10** (full
+version history UI), **M12** (multi-scene), **M13** (community templates),
+**M14** (analytics), plus the differentiators (verification loop,
+patch-based editing). Prod env for paid tiers: `OPENROUTER_API_KEY`
+(Best/Pro + Starter fallback), optionally `GEMINI_API_KEY`. The OpenRouter
+account must hold credit — it reserves `max_tokens` (8000) worth up front,
+so a near-zero balance 402s.

@@ -182,9 +182,10 @@ export async function handleGenerate(
     envelope = await generate(model.id, { prompt });
   } catch (e) {
     const message = (e as Error).message;
-    // Paid providers throw by design until M7. That is "not built yet", not a
+    // A tier whose provider key isn't configured is "not available", not a
     // server fault — and the message must not name the provider it mentions.
-    const notWired = /not wired until Milestone/i.test(message);
+    // (Pre-M7 this same path covered the not-wired-yet stubs.)
+    const notWired = /not wired until Milestone|not configured/i.test(message);
     await recordEvent({
       workspaceId: workspace.id,
       userId,

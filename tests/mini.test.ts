@@ -109,9 +109,10 @@ describe("generate() façade", () => {
     );
   });
 
-  it("defers paid providers to M7", async () => {
+  it("paid providers without keys fail with the not-configured marker (M7)", async () => {
+    // vitest.setup strips the provider keys, so this never hits a real API.
     await expect(
-      generate("anthropic/claude-sonnet-4.6", { prompt: "x" }),
-    ).rejects.toThrow(/Milestone 7/);
+      generate("anthropic/claude-sonnet-5", { prompt: "x" }),
+    ).rejects.toThrow(/not configured/i);
   });
 });

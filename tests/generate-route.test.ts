@@ -168,8 +168,9 @@ describe("POST /api/generate — tier gating", () => {
     expect(res.body.code).toBe("tier_locked");
   });
 
-  it("501s a tier whose provider isn't wired yet, without naming it", async () => {
-    // Starter is allowed on `free` but its provider throws until M7.
+  it("501s a tier whose provider key isn't configured, without naming it", async () => {
+    // Starter is allowed on `free`, but vitest.setup strips all provider keys,
+    // so the façade throws NotConfigured and the route maps it to a clean 501.
     const res = await post({ prompt: "a bold headline", tier: "starter" });
     expect(res.status).toBe(501);
     expect(res.body.code).toBe("not_available");

@@ -29,10 +29,11 @@ export interface AiModel {
 /**
  * The model ladder (spec §2).
  *
- * ⚠️ The provider/model ID strings for the paid tiers are VERIFIED AT M7 against
- * https://openrouter.ai/models before generation is wired — IDs drift. Only the
- * `local` (Mini) tier is active today; the others throw until M7.
- * `gemini-embedding-001` (embeddings) is already verified and in use.
+ * IDs verified 2026-07-26 against the live https://openrouter.ai/api/v1/models
+ * catalog (Best/Pro) and Google AI (Starter). Starter's id is in Google AI
+ * format (no "google/" prefix); when it falls back to OpenRouter because only
+ * OPENROUTER_API_KEY is configured, the façade prefixes it (see generate.ts).
+ * `gemini-embedding-001` (embeddings) is separately verified and in use.
  */
 export const AI_MODELS: AiModel[] = [
   {
@@ -45,7 +46,7 @@ export const AI_MODELS: AiModel[] = [
     provider: "local",
   },
   {
-    id: "google/gemini-2.5-flash",
+    id: "gemini-2.5-flash",
     label: "Starter",
     tier: "starter",
     description: "Fast & affordable",
@@ -54,7 +55,7 @@ export const AI_MODELS: AiModel[] = [
     provider: "gemini-direct",
   },
   {
-    id: "anthropic/claude-sonnet-4.6",
+    id: "anthropic/claude-sonnet-5",
     label: "Best",
     tier: "best",
     description: "Highest quality output",
@@ -63,7 +64,7 @@ export const AI_MODELS: AiModel[] = [
     provider: "openrouter",
   },
   {
-    id: "google/gemini-3-pro",
+    id: "anthropic/claude-opus-5",
     label: "Pro",
     tier: "pro",
     description: "Premium model",

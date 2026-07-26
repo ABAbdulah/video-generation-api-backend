@@ -4,6 +4,7 @@
     "lib": ["ES2022"],
     "module": "Preserve",
     "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "isolatedModules": true,

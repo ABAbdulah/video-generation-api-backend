@@ -3,7 +3,9 @@ import cors from "cors";
 
 import { attachUser } from "@/middleware/auth";
 import { authRouter } from "@/routes/auth";
+import { exportsRouter } from "@/routes/exports";
 import { generateRouter } from "@/routes/generate";
+import { scenesRouter, templatesRouter } from "@/routes/library";
 import { modelsRouter } from "@/routes/models";
 
 /**
@@ -36,6 +38,9 @@ export function createApp() {
   app.use("/api/auth", authRouter);
   app.use("/api/models", modelsRouter);
   app.use("/api/generate", generateRouter);
+  app.use("/api/exports", exportsRouter);
+  app.use("/api/templates", templatesRouter);
+  app.use("/api/scenes", scenesRouter);
 
   // Malformed JSON from express.json() surfaces as a SyntaxError with a body —
   // map it to the same 400 envelope the old route returned.

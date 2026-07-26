@@ -1,5 +1,6 @@
 import {
   boolean,
+  customType,
   index,
   integer,
   jsonb,
@@ -304,6 +305,15 @@ export const templates = pgTable(
 // Exports
 // ---------------------------------------------------------------------------
 
+/** Rendered file bytes live in Postgres for now (M11): no blob-storage
+ *  dependency, and clips this short stay in the low megabytes. The swap point
+ *  to R2/S3 later is exports.fileData → outputUrl — contained by design. */
+const bytea = customType<{ data: Buffer }>({
+  dataType() {
+    return "bytea";
+  },
+});
+
 export const exports = pgTable(
   "exports",
   {
@@ -313,19 +323,28 @@ export const exports = pgTable(
     projectId: text("project_id")
       .notNull()
       .references(() => projects.id, { onDelete: "cascade" }),
+    /** The exact scene version being rendered (M11). */
+    sceneId: text("scene_id").references(() => scenes.id, {
+      onDelete: "cascade",
+    }),
     format: exportFormatEnum("format").notNull(),
     quality: exportQualityEnum("quality").notNull().default("balanced"),
     transparent: boolean("transparent").notNull().default(false),
     status: exportStatusEnum("status").notNull().default("queued"),
     outputUrl: text("output_url"),
     error: text("error"),
+    fileData: bytea("file_data"),
+    fileSize: integer("file_size"),
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { mode: "date" })
       .notNull()
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  (t) => [index("exports_project_idx").on(t.projectId)],
+  (t) => [
+    index("exports_project_idx").on(t.projectId),
+    index("exports_status_idx").on(t.status),
+  ],
 );
 
 // ---------------------------------------------------------------------------
