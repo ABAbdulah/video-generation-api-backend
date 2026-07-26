@@ -26,7 +26,7 @@ export function getPlans(): Plan[] {
     {
       tier: "beginner",
       name: "Creator",
-      price: "$12",
+      price: "$29",
       cadence: "per month",
       features: [
         "Unlock the Best quality tier",
@@ -39,7 +39,7 @@ export function getPlans(): Plan[] {
     {
       tier: "pro",
       name: "Studio",
-      price: "$39",
+      price: "$69",
       cadence: "per month",
       features: [
         "Everything in Creator",
