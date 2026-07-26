@@ -93,11 +93,22 @@ tier_locked the UI renders as an upgrade prompt. Architecture:
   forbids the API from importing the composition.
 - Routes: POST /api/exports (gated), GET /:id, GET /:id/download (bytes,
   bearer-auth — frontend downloads via blob), GET /scene/:id/list.
-- Manual e2e: `pnpm smoke:render [all]`. First run downloads Chrome
-  Headless Shell (~113MB) into the container.
-- ⚠️ Railway risk: Chrome needs system shared libs the Nixpacks image may
-  lack. If deploy renders fail on missing libs, set DISABLE_RENDER_WORKER=1
-  to keep the API healthy and move the worker to a Dockerfile service.
+- Manual e2e: `pnpm smoke:render [all|mp4|webm|gif]`.
+- ⚠️ **Railway MUST build from the Dockerfile, not Nixpacks.** Confirmed in
+  production 2026-07-26: the Nixpacks image lacks Chrome's shared libraries,
+  so every export failed with `Closed with 127` seconds after being queued.
+  `railway.json` now pins `builder: DOCKERFILE`. The Dockerfile installs
+  those libs, installs FONTS (a slim Debian image has none — without them a
+  kinetic-typography product renders blank text), bakes Chrome Headless Shell
+  at build time, and pre-builds the webpack bundle so the first export is
+  fast. Verified by building the image locally and rendering mp4/webm/gif.
+- DEBUGGING NOTE: the deployed worker polls the SAME Neon database as your
+  laptop. While production runs a build that can't render, it will claim and
+  fail local test exports within seconds, which looks exactly like local
+  flakiness. Set DISABLE_RENDER_WORKER=1 on the deployed service (or fix the
+  deploy) before trusting local export tests.
+- `RENDER_LOG_LEVEL=verbose` streams full Chrome output; Remotion truncates
+  the error it throws to 500 chars, which hides the real launch failure.
 
 Also built same day: `GET /api/templates` (public corpus for the gallery)
 and `GET /api/scenes/recent` (workspace-scoped history) — see routes/library.ts.

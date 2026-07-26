@@ -1,0 +1,15 @@
+# Never ship the host's node_modules: it carries a Windows-built Chrome and
+# native binaries that are useless (and harmful) inside a Linux image — the
+# image installs its own and bakes the Linux browser.
+node_modules
+.remotion-bundle
+.git
+.env
+.env.local
+.env.*.local
+tests
+*.tsbuildinfo
+Dockerfile
+.dockerignore
+README.md
+CLAUDE.md

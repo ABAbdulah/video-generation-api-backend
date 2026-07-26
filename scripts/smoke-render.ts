@@ -12,9 +12,16 @@ import { db } from "@/lib/db";
 import { exports as exportsTable, scenes } from "@/lib/db/schema";
 import { processQueue } from "@/render/worker";
 
-const formats = process.argv.includes("all")
-  ? (["mp4", "webm", "gif"] as const)
-  : (["mp4"] as const);
+const ALL = ["mp4", "webm", "gif"] as const;
+type Fmt = (typeof ALL)[number];
+const picked = process.argv.slice(2).filter((a): a is Fmt =>
+  (ALL as readonly string[]).includes(a),
+);
+const formats: readonly Fmt[] = process.argv.includes("all")
+  ? ALL
+  : picked.length > 0
+    ? picked
+    : (["mp4"] as const);
 
 const [scene] = await db
   .select({ id: scenes.id, projectId: scenes.projectId, prompt: scenes.prompt })
