@@ -1,2 +1,9 @@
+# This is a single-package repo. The explicit `packages` field is required:
+# Railway's Nixpacks builds with pnpm 9, which refuses any pnpm-workspace.yaml
+# that lacks it. `allowBuilds` is read by pnpm >=10 locally (approves esbuild's
+# postinstall); pnpm 9 runs build scripts by default and ignores the key.
+packages:
+  - "."
+
 allowBuilds:
   esbuild: true
