@@ -2,8 +2,12 @@ import { db, type Tx } from "@/lib/db";
 import { workspaces } from "@/lib/db/schema";
 import { grantCredits } from "@/lib/credits/ledger";
 
-/** Credits every new account starts with. */
-export const SIGNUP_CREDIT_GRANT = 30;
+/**
+ * Credits every new account starts with — and, on the free plan, the only
+ * ones they ever get. This is the free-tier limit: 10 generations to prove
+ * the product works, then a plan.
+ */
+export const SIGNUP_CREDIT_GRANT = 10;
 
 /**
  * Create the user's personal workspace and seed it with the signup grant.

@@ -28,13 +28,21 @@ afterAll(async () => {
 });
 
 describe("GET /api/billing/plans", () => {
-  it("is public and lists both paid plans", async () => {
+  it("is public and lists free alongside both paid plans", async () => {
     const res = await request(app).get("/api/billing/plans");
     expect(res.status).toBe(200);
+    // Free is included so the dialog can show "what I'm on" next to "what I'd get".
     expect(res.body.plans.map((p: { tier: string }) => p.tier)).toEqual([
+      "free",
       "beginner",
       "pro",
     ]);
+  });
+
+  it("marks the free plan as not purchasable", async () => {
+    const res = await request(app).get("/api/billing/plans");
+    const free = res.body.plans.find((p: { tier: string }) => p.tier === "free");
+    expect(free.available).toBe(false);
   });
 
   it("never leaks Polar product ids to the client", async () => {

@@ -16,7 +16,13 @@ import { users, workspaces } from "@/lib/db/schema";
 import { requireAuth } from "@/middleware/auth";
 import { getUserWorkspace } from "@/lib/workspace";
 import { grantCredits } from "@/lib/credits/ledger";
-import { getPlan, getPlans, PLAN_CREDIT_GRANT, type PaidTier } from "@/lib/billing/plans";
+import {
+  FREE_PLAN,
+  getPlan,
+  getPlans,
+  PLAN_CREDIT_GRANT,
+  type PaidTier,
+} from "@/lib/billing/plans";
 import { polarClient, polarConfigured, polarServer } from "@/lib/billing/polar";
 
 export const billingRouter = Router();
@@ -29,10 +35,14 @@ billingRouter.get("/plans", (_req, res) => {
     // when the server has no Polar credentials.
     configured: polarConfigured(),
     sandbox: polarServer() === "sandbox",
-    plans: getPlans().map(({ productId: _p, ...plan }) => ({
-      ...plan,
-      available: !!_p,
-    })),
+    plans: [
+      { ...FREE_PLAN, available: false, current: true },
+      ...getPlans().map(({ productId: _p, ...plan }) => ({
+        ...plan,
+        available: !!_p,
+        current: false,
+      })),
+    ],
   });
 });
 

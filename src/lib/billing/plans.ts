@@ -29,9 +29,9 @@ export function getPlans(): Plan[] {
       price: "$29",
       cadence: "per month",
       features: [
-        "Unlock the Best quality tier",
-        "Export MP4, WebM and GIF",
         "300 credits every month",
+        "Unlock the Best quality engine",
+        "Export MP4, WebM and GIF",
         "Full template library",
       ],
       productId: process.env.POLAR_PRODUCT_BEGINNER,
@@ -43,8 +43,8 @@ export function getPlans(): Plan[] {
       cadence: "per month",
       features: [
         "Everything in Creator",
-        "Unlock the Pro quality tier",
         "1,200 credits every month",
+        "Unlock the Pro quality engine",
         "Priority rendering",
       ],
       productId: process.env.POLAR_PRODUCT_PRO,
@@ -60,4 +60,22 @@ export function getPlan(tier: string): Plan | undefined {
 export const PLAN_CREDIT_GRANT: Record<PaidTier, number> = {
   beginner: 300,
   pro: 1200,
+};
+
+/**
+ * The free plan, shown alongside the paid ones so the upgrade dialog answers
+ * "what am I on now, and what changes if I move?" instead of only pitching.
+ * Not purchasable, so it carries no product id.
+ */
+export const FREE_PLAN = {
+  tier: "free" as const,
+  name: "Free",
+  price: "$0",
+  cadence: "to start",
+  features: [
+    "10 credits, one time",
+    "Mini and Starter engines",
+    "Full template library",
+    "Preview only — no video export",
+  ],
 };

@@ -181,7 +181,7 @@ describe("POST /api/generate — tier gating", () => {
 describe("POST /api/generate — the Mini happy path", () => {
   let firstSceneId: string;
 
-  it("generates, persists a scene + version, and charges nothing", async () => {
+  it("generates, persists a scene + version, and debits the tier's cost", async () => {
     const balanceBefore = await getBalance(db, workspaceId);
 
     const res = await post({
@@ -194,16 +194,16 @@ describe("POST /api/generate — the Mini happy path", () => {
     expect(body.ok).toBe(true);
     expect(body.tier).toBe("mini");
     expect(body.label).toBe("Mini");
-    expect(body.creditsCharged).toBe(0);
+    // Mini costs a credit too — the balance IS the free-tier limit.
+    expect(body.creditsCharged).toBe(1);
     expect(body.scene.code).toContain("export default");
     expect(body.scene.durationInFrames).toBeGreaterThan(0);
     expect(Array.isArray(body.scene.params)).toBe(true);
 
     firstSceneId = body.scene.sceneId;
 
-    // Free tier must not move the ledger at all.
-    expect(body.balance).toBe(balanceBefore);
-    expect(await getBalance(db, workspaceId)).toBe(SIGNUP_CREDIT_GRANT);
+    expect(body.balance).toBe(balanceBefore - 1);
+    expect(await getBalance(db, workspaceId)).toBe(SIGNUP_CREDIT_GRANT - 1);
 
     const [scene] = await db
       .select()
