@@ -19,3 +19,16 @@ export class ProviderCallError extends Error {
     this.name = "ProviderCallError";
   }
 }
+
+/**
+ * The upstream account can't serve this tier right now — out of credit, or
+ * rate limited. Distinct from ProviderCallError because retrying is futile
+ * until an operator acts, so the user is told to pick another tier rather
+ * than "try again". Still never names the vendor (§5).
+ */
+export class ProviderUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ProviderUnavailableError";
+  }
+}

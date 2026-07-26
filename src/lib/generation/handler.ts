@@ -40,6 +40,7 @@ import {
 import { generate } from "@/lib/ai/generate";
 import { getModelByTier, isModelAccessible } from "@/lib/ai/models";
 import { moderatePrompt } from "@/lib/ai/moderation";
+import { ProviderUnavailableError } from "@/lib/ai/providers/errors";
 import { sanitizeGeneratedCode, sanitizeOptionalText } from "@/lib/ai/sanitize";
 import { checkGenerationRateLimit } from "@/lib/ratelimit";
 import {
@@ -186,6 +187,23 @@ export async function handleGenerate(
     // server fault — and the message must not name the provider it mentions.
     // (Pre-M7 this same path covered the not-wired-yet stubs.)
     const notWired = /not wired until Milestone|not configured/i.test(message);
+    const unavailable = e instanceof ProviderUnavailableError;
+
+    if (unavailable) {
+      await recordEvent({
+        workspaceId: workspace.id,
+        userId,
+        tier,
+        outcome: "failed",
+        prompt,
+        detail: `provider_unavailable: ${message}`.slice(0, 500),
+      });
+      return fail(
+        "tier_unavailable",
+        "This quality tier is temporarily unavailable. Try Mini or Starter, or check back shortly.",
+        503,
+      );
+    }
     await recordEvent({
       workspaceId: workspace.id,
       userId,

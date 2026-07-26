@@ -3,6 +3,7 @@ import cors from "cors";
 
 import { attachUser } from "@/middleware/auth";
 import { authRouter } from "@/routes/auth";
+import { billingRouter } from "@/routes/billing";
 import { exportsRouter } from "@/routes/exports";
 import { generateRouter } from "@/routes/generate";
 import { scenesRouter, templatesRouter } from "@/routes/library";
@@ -26,6 +27,10 @@ export function createApp() {
   app.disable("x-powered-by");
 
   app.use(cors({ origin: allowedOrigins() }));
+  // The Polar webhook is signature-verified over the EXACT request bytes, so
+  // it must capture the raw body before express.json() consumes the stream.
+  // Order matters here — json() skips a request whose body is already parsed.
+  app.use("/api/billing/webhook", express.raw({ type: "*/*" }));
   app.use(express.json({ limit: "1mb" }));
   app.use(attachUser);
 
@@ -41,6 +46,7 @@ export function createApp() {
   app.use("/api/exports", exportsRouter);
   app.use("/api/templates", templatesRouter);
   app.use("/api/scenes", scenesRouter);
+  app.use("/api/billing", billingRouter);
 
   // Malformed JSON from express.json() surfaces as a SyntaxError with a body —
   // map it to the same 400 envelope the old route returned.

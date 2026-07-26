@@ -35,6 +35,8 @@ export type GenerateErrorCode =
   | "tier_locked"
   | "insufficient_credits"
   | "not_available"
+  /** Upstream capacity/billing problem on our side — retrying won't help. */
+  | "tier_unavailable"
   | "generation_failed";
 
 export interface GeneratedScene {

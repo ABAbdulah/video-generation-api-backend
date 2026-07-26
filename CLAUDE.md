@@ -113,6 +113,34 @@ tier_locked the UI renders as an upgrade prompt. Architecture:
 Also built same day: `GET /api/templates` (public corpus for the gallery)
 and `GET /api/scenes/recent` (workspace-scoped history) — see routes/library.ts.
 
+## Billing — Polar (built 2026-07-26)
+
+`src/routes/billing.ts` + `src/lib/billing/`. Plans: Creator (beginner, $12)
+and Studio (pro, $39); credits granted on activation via the ledger.
+
+- **A plan is granted ONLY by a signature-verified webhook.** The browser can
+  never change a subscription tier; `/checkout` just mints a Polar payment
+  link, and the `?upgraded=1` redirect is UX only, never proof of payment.
+- The webhook needs the RAW body for signature verification, so `app.ts`
+  mounts `express.raw()` on `/api/billing/webhook` BEFORE `express.json()`.
+  Reordering those two silently breaks every webhook.
+- Defaults to Polar's SANDBOX server; real charges require
+  `POLAR_SERVER=production`. Missing keys degrade to a "not set up" state —
+  the API still boots and everything else works.
+- Env: `POLAR_ACCESS_TOKEN`, `POLAR_SERVER`, `POLAR_WEBHOOK_SECRET`,
+  `POLAR_PRODUCT_BEGINNER`, `POLAR_PRODUCT_PRO` (product ids from Polar).
+  Webhook URL to register: `<backend>/api/billing/webhook`, events
+  `subscription.active`, `subscription.revoked`, `subscription.canceled`,
+  `order.paid`.
+
+**Upstream capacity is now its own failure mode.** OpenRouter 402/429 raises
+`ProviderUnavailableError` → 503 `tier_unavailable` → "This quality tier is
+temporarily unavailable. Try Mini or Starter." Previously an out-of-credit
+account produced "Generation failed. Please try again.", sending users into a
+retry loop that could never succeed. If Best/Pro return that message, the
+OpenRouter account is out of credit (check `GET https://openrouter.ai/api/v1/key`
+— `is_free_tier: true` and no balance means paid models will 402).
+
 ## Next milestone
 
 Remaining roadmap: **M9** (AI-authored params persistence), **M10** (full

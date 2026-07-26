@@ -4,7 +4,11 @@
  * configured (see generate.ts).
  */
 import type { ChatMessage } from "../llm";
-import { NotConfiguredError, ProviderCallError } from "./errors";
+import {
+  NotConfiguredError,
+  ProviderCallError,
+  ProviderUnavailableError,
+} from "./errors";
 
 const ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 
@@ -41,6 +45,15 @@ export async function callOpenRouter(
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
+    // 402 (out of credit) and 429 (rate limited) are OUR account's problem,
+    // not a bad request from the user. Surfacing them as a generic
+    // "generation failed" sent users into a retry loop that could never
+    // succeed, so they get their own error type and an actionable message.
+    if (res.status === 402 || res.status === 429) {
+      throw new ProviderUnavailableError(
+        `openrouter HTTP ${res.status}: ${body.slice(0, 300)}`,
+      );
+    }
     throw new ProviderCallError(
       `openrouter HTTP ${res.status}: ${body.slice(0, 300)}`,
     );
